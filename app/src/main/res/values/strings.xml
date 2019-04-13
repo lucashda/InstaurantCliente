@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">InstaurantCliente</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="title_activity_detalhes_pedido">DetalhesPedido</string>
+    <string name="confirmar_pedido">Confirmar Pedido</string>
+    <string name="pedido_confimado">Pedido Confimado!</string>
+    <string name="aguarde_enquanto_seu_pedido_fica_pronto">Aguarde enquanto seu pedido fica pronto.</string>
+    <string name="ver_detalhes">Ver Detalhes</string>
+    <string name="fazer_outro_pedido">Fazer Outro Pedido</string>
+    <string name="fechar_conta">Fechar Conta</string>
+    <string name="total_a_pagar_r">Total a Pagar (R$)</string>
+    <string name="pratos_principais">Pratos Principais</string>
+    <string name="sobremesas">Sobremesas</string>
+    <string name="bebidas">Bebidas</string>
+    <string name="sair">Sair</string>
+    <string name="action_settings">Configurações</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_ababa">ababa</string>
+
+    <string-array name="Categorias">
+
+    </string-array>
+</resources>

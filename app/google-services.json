@@ -1,0 +1,101 @@
+{
+  "project_info": {
+    "project_number": "1092656904939",
+    "firebase_url": "https://resto-ondeline.firebaseio.com",
+    "project_id": "resto-ondeline",
+    "storage_bucket": "resto-ondeline.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1092656904939:android:42ab2ca1e0664d26",
+        "android_client_info": {
+          "package_name": "com.ondeline.Instaurant"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7W9w6E4QLjeNBS8klso0pTJE-3u2DhKY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1092656904939-2vgtpfior721rdq0tfu7mi20jkop4pn2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1092656904939:android:26b79f516b2a2ef1",
+        "android_client_info": {
+          "package_name": "com.ondeline.InstaurantCliente"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1092656904939-niukjgi0ihmdkib4cufkmhj8ujfi9mp0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ondeline.InstaurantCliente",
+            "certificate_hash": "9bb6b76f4ae75f0fc065e5e20afe24e3663aee11"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7W9w6E4QLjeNBS8klso0pTJE-3u2DhKY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1092656904939-2vgtpfior721rdq0tfu7mi20jkop4pn2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1092656904939:android:f13f086d475e8c45",
+        "android_client_info": {
+          "package_name": "com.ondeline.instaurant"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1092656904939-gg0dbrvnfclvt2srntr7q0ppiksungc5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ondeline.instaurant",
+            "certificate_hash": "9bb6b76f4ae75f0fc065e5e20afe24e3663aee11"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7W9w6E4QLjeNBS8klso0pTJE-3u2DhKY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1092656904939-2vgtpfior721rdq0tfu7mi20jkop4pn2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
