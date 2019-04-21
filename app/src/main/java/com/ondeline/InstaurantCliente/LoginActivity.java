@@ -19,7 +19,6 @@ import com.google.firebase.auth.FirebaseAuth;
 public class LoginActivity extends AppCompatActivity {
 
     EditText email, senha;
-    TextView cadastrar;
     Button btnLogin;
 
     FirebaseAuth firebaseAuth;
