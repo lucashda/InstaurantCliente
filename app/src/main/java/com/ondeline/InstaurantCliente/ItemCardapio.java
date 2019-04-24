@@ -4,22 +4,25 @@ package com.ondeline.InstaurantCliente;
 public class ItemCardapio {
 
     private String nomeItem;
+    private String categoriaItem;
     private String descricaoItem;
     private String valorItem;
+    private String urlImagem;
 
-    public ItemCardapio(String nome, String descricao, String valor) {
+    public ItemCardapio(String nome, String categoriaItem,String descricao, String valor, String urlImagem) {
         this.nomeItem = nome;
         this.descricaoItem = descricao;
         this.valorItem = valor;
-    }
-
-    public ItemCardapio(String nomeItem, String valorItem) {
-        this.nomeItem = nomeItem;
-        this.valorItem = valorItem;
+        this.urlImagem = urlImagem;
+        this.categoriaItem = categoriaItem;
     }
 
     public String getNomeItem() {
         return nomeItem;
+    }
+
+    public String getCategoriaItem(){
+        return categoriaItem;
     }
 
     public String getDescricaoItem() {
@@ -30,4 +33,7 @@ public class ItemCardapio {
         return valorItem;
     }
 
+    public String getUrlImagem() {
+        return urlImagem;
+    }
 }
