@@ -40,7 +40,7 @@ public class DetalhesPedido extends AppCompatActivity {
         escolhas(bundle);
         calendar = Calendar.getInstance();
 
-       db = FirebaseFirestore.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         Button btnConfimrarPedido = findViewById(R.id.btnConfirmarPedido);
 
@@ -82,6 +82,6 @@ public class DetalhesPedido extends AppCompatActivity {
             txt += "    - " + field + "     (" + valores.get(escolhas.indexOf(field)) + ")\n";
         }
         txtEscolhas.setText(txt);
-        valorTotal.setText(bundle.getString("valorTotal"));
+        valorTotal.setText("R$" + String.format("%.2f", bundle.getString("valorTotal")));
     }
 }

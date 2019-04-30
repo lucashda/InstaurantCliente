@@ -6,7 +6,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,66 +30,56 @@ import java.util.ArrayList;
 
 public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder> {
 
-    private ArrayList<ItemCardapio> itens;
+    private ArrayList<String> nomes;
+    private ArrayList<String> imagens;
+    private ArrayList<String> valores;
     private ArrayList<ItemViewHolder> holders = new ArrayList<>();
+    private String categoria;
     private ArrayList<File> paths = new ArrayList<>();
     private Context context;
-    private TextView valorTotal;
-    private double acc;
-    private Button btnLimpar;
-    private Button btnFazerPedido;
     private File localFile;
+    RecyclerViewListener recyclerViewListener;
+    private double acc = 0;
 
     FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
     StorageReference reference = firebaseStorage.getReference();
 
-    public ItemAdapter(ArrayList<ItemCardapio> itens, TextView textView, Button btnLimpar, Button btnFazerPedido, Context context) {
-        this.itens = itens;
+    public ItemAdapter(ArrayList<String> nomes, ArrayList<String> imagens, ArrayList<String> valores, Context context) {
+        this.nomes = nomes;
+        this.imagens = imagens;
+        this.valores = valores;
         this.context = context;
-        this.valorTotal = textView;
-        this.btnLimpar = btnLimpar;
-        this.btnFazerPedido = btnFazerPedido;
+        recyclerViewListener = (RecyclerViewListener) context;
+    }
+
+    public void setCategoria(String categoria){
+        this.categoria = categoria;
     }
 
     @Override
     public void onBindViewHolder(final ItemViewHolder holder, int position) {
-        getImageStorage(itens.get(position).getUrlImagem(), holder, position);
-        holder.nomeItem.setText(itens.get(position).getNomeItem());
-        holder.valorItem.setText("R$" + String.format("%.2f", Double.parseDouble(itens.get(position).getValorItem())));
-        holders.add(holder);
-
-        final int i = position;
+        getImageStorage(imagens.get(position), holder, position);
+        holder.nomeItem.setText(nomes.get(position));
+        holder.valorItem.setText(valores.get(position));
         holder.checkBoxItem.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if(isChecked){
-                    double valor = Double.parseDouble(itens.get(i).getValorItem());
-                    acc += valor;
-                    valorTotal.setText("Total a Pagar: R$" + String.format("%.2f", acc));
-
+                    acc += Double.parseDouble(holder.valorItem.getText().toString());
+                    recyclerViewListener.getValores(categoria, acc);
+                    holders.add(holder);
                 } else {
-                    double valor = Double.parseDouble(itens.get(i).getValorItem());
-                    acc -= valor;
-                    valorTotal.setText("Total a Pagar: R$" + String.format("%.2f", acc));
+                    acc -= Double.parseDouble(holder.valorItem.getText().toString());
+                    recyclerViewListener.getValores(categoria,acc);
+                    holders.remove(holder);
                 }
             }
         });
 
-        btnLimpar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                limparSelecao(holders);
-            }
-        });
+        recyclerViewListener.limparSelecao(categoria, new ItemAdapter(nomes, imagens, valores, context), holders);
+        recyclerViewListener.fazerPedido(categoria, holders);
 
-        btnFazerPedido.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                fazerPedido(holders, valorTotal);
-            }
-        });
     }
-
 
     @Override
     public ItemViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
@@ -100,35 +92,14 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
 
     @Override
     public int getItemCount() {
-        return itens.size();
+        return nomes.size();
     }
+
 
     public void limparSelecao(ArrayList<ItemViewHolder> escolhas) {
         for (int j = 0; j < escolhas.size(); j++) {
             escolhas.get(j).checkBoxItem.setChecked(false);
         }
-    }
-
-    public void fazerPedido(ArrayList<ItemViewHolder> escolhas, TextView valorTotal){
-
-        Intent intent = new Intent(context, DetalhesPedido.class);
-
-        Bundle bundle = new Bundle();
-
-        ArrayList<String> nomeItem = new ArrayList<>(),
-                valorItem = new ArrayList<>();
-
-        for(int j = 0; j < escolhas.size(); j++){
-            if(escolhas.get(j).checkBoxItem.isChecked()){
-                nomeItem.add(escolhas.get(j).checkBoxItem.getText().toString());
-                valorItem.add(escolhas.get(j).valorItem.getText().toString());
-            }
-        }
-        bundle.putStringArrayList("nomeItem", nomeItem);
-        bundle.putStringArrayList("valorItem", valorItem);
-        bundle.putString("valorTotal", valorTotal.getText().toString());
-        intent.putExtras(bundle);
-        context.startActivity(intent);
     }
 
     static class ItemViewHolder extends RecyclerView.ViewHolder{
@@ -169,5 +140,11 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
 
             }
         });
+    }
+
+    public interface RecyclerViewListener {
+        void getValores(String categoria, double valor);
+        void limparSelecao(String categoria, ItemAdapter adapter, ArrayList<ItemViewHolder> holders);
+        void fazerPedido(String categoria, ArrayList<ItemViewHolder> holders);
     }
 }

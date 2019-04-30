@@ -34,4 +34,8 @@
     <string name="menu_tools">Tools</string>
     <string name="menu_share">Share</string>
     <string name="menu_send">Send</string>
+    <string name="limpar">Limpar</string>
+    <string name="fazer_pedido">Fazer Pedido</string>
+    <string name="selecione_uma_categoria_para_come_ar">Selecione uma categoria para começar.</string>
+    <string name="preencha_os_campos_abaixo_com_o_nome_das_pessoas_que_ir_o_dividir_a_conta_com_voc">Preencha os campos abaixo com o nome das pessoas que irão dividir a conta com você:</string>
 </resources>

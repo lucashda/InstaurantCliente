@@ -1,32 +1,50 @@
 package com.ondeline.InstaurantCliente;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.QuerySnapshot;
-
+import java.io.FileDescriptor;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class CardapioFragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;
 
-    private String idFragment;
-    private ArrayList<ItemCardapio> itens;
+    private ArrayList<String> nomes = new ArrayList<>();
+    private ArrayList<String> descricoes = new ArrayList<>();
+    private ArrayList<String> valores = new ArrayList<>();
+    private ArrayList<String> imagens = new ArrayList<>();
+
+    private Button btnLimpar;
+    private Button btnFazerPedido;
+    private TextView valorTotal;
+
+    private RecyclerView recyclerView;
+    private ItemAdapter adapter;
+    private Context context;
 
     public CardapioFragment() { }
 
-    public static CardapioFragment newInstance(String id, ArrayList<ItemCardapio> itens) {
+    public static CardapioFragment newInstance(ArrayList<String> nomes, ArrayList<String> descricoes, ArrayList<String> valores, ArrayList<String>imagens) {
         CardapioFragment fragment = new CardapioFragment();
         Bundle args = new Bundle();
-        args.putString("categoria", id);
+        args.putStringArrayList("nomes", nomes);
+        args.putStringArrayList("imagens", imagens);
+        args.putStringArrayList("valores", valores);
+        args.putStringArrayList("descricoes", descricoes);
         fragment.setArguments(args);
         return fragment;
     }
@@ -35,17 +53,35 @@ public class CardapioFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            this.idFragment = getArguments().getString("categoria");
+            this.nomes = getArguments().getStringArrayList("nomes");
+            this.imagens = getArguments().getStringArrayList("imagens");
+            this.valores = getArguments().getStringArrayList("valores");
+            this.descricoes = getArguments().getStringArrayList("descricoes");
         }
+        adapter = new ItemAdapter(nomes, imagens, valores, context);
+        adapter.setCategoria(getTag());
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.cardapio_fragment, container, false);
-        TextView textView = view.findViewById(R.id.nomeFragmento);
-        textView.setText(this.idFragment);
+        recyclerView = view.findViewById(R.id.recyclerViewCardapio);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new GridLayoutManager(context, 4));
+
         return view;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
     }
 
     @Override
@@ -65,7 +101,30 @@ public class CardapioFragment extends Fragment {
         mListener = null;
     }
 
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
+
+    public void setContext(Context context) {
+        this.context = context;
+    }
+
+    public void setBtnLimpar(Button btnLimpar) {
+        this.btnLimpar = btnLimpar;
+    }
+
+    public void setBtnFazerPedido(Button btnFazerPedido) {
+        this.btnFazerPedido = btnFazerPedido;
+    }
+
+    public void setValorTotal(TextView valorTotal) {
+        this.valorTotal = valorTotal;
+    }
+
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
+
     }
 }
