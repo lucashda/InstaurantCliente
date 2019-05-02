@@ -17,9 +17,21 @@
         android:id="@+id/nav_view"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_gravity="start"
+        android:layout_gravity="left"
         android:fitsSystemWindows="true"
+        android:maxWidth="562dp"
         app:headerLayout="@layout/nav_header_main"
-        app:menu="@menu/activity_main_drawer" />
+        app:menu="@menu/activity_main_drawer">
+
+        <android.support.design.widget.NavigationView
+            android:id="@+id/sub_nav_view"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="left"
+            android:layout_marginLeft="282dp"
+            android:fitsSystemWindows="true"
+            android:maxWidth="280dp"
+            app:menu="@menu/activity_main_drawer" />
+    </android.support.design.widget.NavigationView>
 
 </android.support.v4.widget.DrawerLayout>

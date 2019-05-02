@@ -8,12 +8,19 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.BaseTransientBottomBar;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
+import android.view.DragEvent;
+import android.view.SubMenu;
 import android.view.View;
 import android.support.v4.view.GravityCompat;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -25,7 +32,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -46,34 +52,41 @@ import java.util.Map;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, CardapioFragment.OnFragmentInteractionListener, ItemAdapter.RecyclerViewListener {
+        implements NavigationView.OnNavigationItemSelectedListener,
+        CardapioFragment.OnFragmentInteractionListener,
+        ItemAdapter.RecyclerViewListener,
+        RecyclerItemTouchHelperListener{
 
     String cliente;
-    String cpfCliente;
+    CoordinatorLayout rootLayout;
 
     Menu menu;
     ArrayList<ItemCardapio> itens = new ArrayList<>();
     ArrayList<String> idArrayList = new ArrayList<>();
+    ArrayList<String> nomes = new ArrayList<>();
+    ArrayList<String> valores = new ArrayList<>();
+    ArrayList<String> imagens = new ArrayList<>();
+    Map<String, ItemAdapter.ItemViewHolder> escolhas = new HashMap<>();
     FragmentManager fragmentManager;
 
     String atualCategoria;
     Button btnLimpar;
-    Button btnFazerPedido;
-    Map<String, Double> valoresMap = new HashMap<>();
-    Map<String, Adapters> limparSelecaoMap = new HashMap<>();
-    Map<String, ArrayList<ItemAdapter.ItemViewHolder>> fazerPedido = new HashMap<>();
+    Button btnFazerPedido;;
     TextView valorTotal;
     double acc;
     Intent detalhesPedido;
     Bundle bundle;
     Context context = this;
 
+    RecyclerView listaEscolhas;
+    ItemAdapter adapter;
+
     FirebaseFirestore db;
     FirebaseAuth firebaseAuth;
     FirebaseUser firebaseUser;
 
     final int SUBMENU_CATEGORIA_ID = 1234567;
-    final int DIALOG = 100;
+    final int CADASTRO = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,8 +101,9 @@ public class MainActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
+        rootLayout = findViewById(R.id.CoordinatorLayout);
+        listaEscolhas = findViewById(R.id.listaEscolhas);
         btnFazerPedido = findViewById(R.id.btnFazerPedido);
         btnLimpar = findViewById(R.id.btnLimpar);
         valorTotal = findViewById(R.id.txtValorTotal);
@@ -102,7 +116,63 @@ public class MainActivity extends AppCompatActivity
         getDatabase();
         detalhesPedido = new Intent(MainActivity.this, DetalhesPedido.class);
         bundle = new Bundle();
+        initListaEscolhas();
         dialogoInicial();
+
+        btnLimpar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                nomes.clear();
+                imagens.clear();
+                valores.clear();
+                escolhas.clear();
+                adapter.notifyDataSetChanged();
+                valorTotal.setText("Total a Pagar: R$" + String.format("%.2f",0.0));
+            }
+        });
+
+        btnFazerPedido.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialogConfirmarPedido();
+            }
+        });
+    }
+
+    private void initListaEscolhas(){
+        adapter = new ItemAdapter(listaEscolhas.getId(), nomes, imagens, valores, context);
+        listaEscolhas.setAdapter(adapter);
+        listaEscolhas.setItemAnimator( new DefaultItemAnimator());
+        listaEscolhas.addItemDecoration(new DividerItemDecoration(this,DividerItemDecoration.VERTICAL));
+        listaEscolhas.setLayoutManager(new LinearLayoutManager(context));
+        ItemTouchHelper.SimpleCallback item = new RecyclerItemTouchHelper(0, ItemTouchHelper.RIGHT, this);
+        new ItemTouchHelper(item).attachToRecyclerView(listaEscolhas);
+    }
+
+    @Override
+    public void onSwiped(RecyclerView.ViewHolder itemViewHolder, int direction, final int position) {
+        if(itemViewHolder instanceof ItemAdapter.ItemViewHolder){
+            final ItemAdapter.ItemViewHolder holder = (ItemAdapter.ItemViewHolder) itemViewHolder;
+            final int index = itemViewHolder.getAdapterPosition();
+            final String nome = adapter.nomes.get(position);
+            final String imagem = adapter.imagens.get(position);
+            final String valor = adapter.valores.get(position);
+            escolhas.remove(nome);
+            adapter.removeItem(index);
+            setValorTotal(escolhas);
+
+            Snackbar snackbar = Snackbar.make(rootLayout, holder.nomeItem.getText().toString() + " foi Removido!", Snackbar.LENGTH_LONG);
+            snackbar.setAction("DESFAZER", new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    adapter.restoreItem(holder, nome, imagem, valor, index);
+                    escolhas.put(nome, holder);
+                    setValorTotal(escolhas);
+                }
+            });
+            snackbar.setActionTextColor(getResources().getColor(R.color.colorAccent));
+            snackbar.show();
+        }
     }
 
     @Override
@@ -110,19 +180,19 @@ public class MainActivity extends AppCompatActivity
         super.onStart();
         firebaseUser = firebaseAuth.getCurrentUser();
         UpdateUI.updateUI(firebaseUser, this);
+        Log.i("TAG", "passou pelo onStart");
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onPostResume() {
+        super.onPostResume();
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if(requestCode == DIALOG && resultCode == RESULT_OK){
-            dialogoFinal();
-        } else if(requestCode == DIALOG && resultCode == RESULT_CANCELED){
-            dialogoFinal();
+        if(requestCode == CADASTRO && resultCode == RESULT_OK){
+            bundle = data.getExtras();
+            cliente = bundle.getString("nomeCliente");
         }
     }
 
@@ -218,9 +288,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
         Fragment fragment;
-        //fragment = fragmentManager.getFragment(bundle, atualCategoria);
         if (fragmentManager.findFragmentByTag(atualCategoria) != null) {
             fragment = fragmentManager.findFragmentByTag(atualCategoria);
             fragmentManager.beginTransaction().hide(fragment).commit();
@@ -262,93 +330,72 @@ public class MainActivity extends AppCompatActivity
     private void dialogoInicial(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Seja Bem Vindo");
-        builder.setMessage("Antes de fazer seu pedido, precisamos que informe seu nome completo e c.p.f nos campos abaixo:");
+        View view = getLayoutInflater().inflate(R.layout.login_senha, null);
+        builder.setView(view);
         builder.setCancelable(false);
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("Login", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                dialogDadosCliente();
+
+            }
+        }).setNegativeButton("Cadastrar", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent(MainActivity.this, FormularioMesa.class);
+                startActivityForResult(intent, CADASTRO);
+            }
+        }).setNeutralButton("Pular", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialogoFinal();
             }
         });
         builder.create();
         builder.show();
     }
 
-    private void dialogDadosCliente(){
-        LayoutInflater inflater = getLayoutInflater();
-        final View view = inflater.inflate(R.layout.nome_cpf, null);
-        final EditText inputNome = view.findViewById(R.id.inputNome);
-        final EditText inputCpf = view.findViewById(R.id.inputCpf);
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.setView(view);
-        dialog.setCancelable(false);
-        dialog.setButton(DialogInterface.BUTTON_NEUTRAL, "Limpar", (DialogInterface.OnClickListener) null);
-        dialog.setButton(DialogInterface.BUTTON_POSITIVE, "Próximo", (DialogInterface.OnClickListener) null);
-        dialog.show();
-
-        Button limpar = dialog.getButton(DialogInterface.BUTTON_NEUTRAL);
-        limpar.setOnClickListener(new DialogButtonClickWrapper(dialog) {
-            @Override
-            protected boolean onClicked() {
-                inputNome.setText("");
-                inputCpf.setText("");
-                return false;
-            }
-        });
-
-        Button proximo = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-        proximo.setOnClickListener(new DialogButtonClickWrapper(dialog) {
-            @Override
-            protected boolean onClicked() {
-                boolean isValid = (validarCliente(view, inputNome.getText().toString(), inputCpf.getText().toString()));
-                if(isValid){
-                    cliente = inputNome.getText().toString();
-                    cpfCliente = inputCpf.getText().toString();
-                    dialogDividirContas();
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        });
-    }
-
-    private void dialogDividirContas(){
-        LayoutInflater inflater = getLayoutInflater();
-        final View view = inflater.inflate(R.layout.quantidade_pessoas, null);
-        final EditText nPessoas = view.findViewById(R.id.qtdePessoas);
-        nPessoas.setGravity(Gravity.CENTER_HORIZONTAL);
-        AlertDialog dialog = new AlertDialog.Builder(this).create();
-        dialog.setView(view);
-        dialog.setTitle("Dividir Conta");
-        dialog.setMessage("Se desejar dividir a conta, informe a quantidade de pessoas que irão dividir a conta com você:");
-        dialog.setCancelable(false);
-        dialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Vou Pagar Tudo!", new DialogInterface.OnClickListener() {
+    private void dialogConfirmarPedido(){
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Confirme seu Pedido,");
+        final StringBuilder opcoes = new StringBuilder();
+        int j = 0;
+        for(String opcao : nomes){
+            opcoes.append(opcao);
+            opcoes.append(" - ");
+            opcoes.append(valores.get(j));
+            opcoes.append("\n");
+            j++;
+        }
+        builder.setMessage(opcoes);
+        builder.setCancelable(true);
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                dialogoFinal();
-            }
-        });
-        dialog.setButton(DialogInterface.BUTTON_POSITIVE, "Quero Rachar!", (DialogInterface.OnClickListener) null);
-        dialog.show();
-        Button dividir = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-        dividir.setOnClickListener(new DialogButtonClickWrapper(dialog) {
-            @Override
-            protected boolean onClicked() {
-                String p = nPessoas.getText().toString();
-                if(p.equals("") || p.equals("0")){
-                    Snackbar.make(view, "Informe um numero válido maior 0!", Snackbar.LENGTH_SHORT).show();
-                    return false;
-                } else {
-                    Intent intent = new Intent(MainActivity.this, FormularioMesa.class);
-                    bundle.putInt("pessoas", Integer.parseInt(p));
-                    intent.putExtras(bundle);
-                    bundle.clear();
-                    startActivityForResult(intent, DIALOG);
-                    return true;
+                Collection<ItemAdapter.ItemViewHolder> holders = escolhas.values();
+                ArrayList<String> nomes = new ArrayList<>();
+                ArrayList<String> quantidades = new ArrayList<>();
+                ArrayList<String> valores = new ArrayList<>();
+                for(ItemAdapter.ItemViewHolder holder : holders){
+                    nomes.add(holder.nomeItem.getText().toString());
+                    quantidades.add(String.valueOf(holder.qtde));
+                    valores.add(holder.valorItem.getText().toString());
                 }
+                bundle.putStringArrayList("nomes", nomes);
+                bundle.putStringArrayList("quantidades", quantidades);
+                bundle.putStringArrayList("valores", valores);
+                bundle.putDouble("valorTotal", acc);
+                detalhesPedido.putExtras(bundle);
+                startActivity(detalhesPedido);
+            }
+        }).setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                opcoes.delete(0, opcoes.length());
+                dialog.dismiss();
             }
         });
+        builder.create();
+        builder.show();
     }
 
     private void dialogoFinal(){
@@ -372,88 +419,87 @@ public class MainActivity extends AppCompatActivity
         builder.create().show();
     }
 
-    private boolean validarCliente(View v, String nome, String cpf){
-        if(nome.length() <= 1){
-            Snackbar.make(v, "Nome Inválido!", Snackbar.LENGTH_SHORT).show();
-            return false;
-        } else if(!ValidarCPF.isCPF(cpf)){
-            Snackbar.make(v, "C.P.F Inválido!", Snackbar.LENGTH_SHORT).show();
-            return false;
-        } else {
-            return true;
-        }
-    }
-
     @Override
-    public void getValores(String categoria,double valor) {
-        if(valoresMap.get(categoria) == null) {
-            valoresMap.put(categoria, valor);
-        } else {
-            valoresMap.remove(categoria);
-            valoresMap.put(categoria, valor);
-        };
-        acc = 0;
-        Collection<Double> valores = valoresMap.values();
-        for(double d : valores){
-            acc += d;
-            Log.i("TAG", String.valueOf(d));
-        }
-        valorTotal.setText(getString(R.string.total_a_pagar_r) + String.format("%.2f", acc));
-    }
+    public void dropItens(final ItemAdapter.ItemViewHolder holder, final String nome, final String valor, final String imagem) {
 
-    @Override
-    public void limparSelecao(String categoria, ItemAdapter adapter, ArrayList<ItemAdapter.ItemViewHolder> holders) {
-        if(limparSelecaoMap.get(categoria) == null) {
-            limparSelecaoMap.put(categoria, new Adapters(adapter, holders));
-        }
-        final Collection<Adapters> adapters = limparSelecaoMap.values();
-        btnLimpar.setOnClickListener(new View.OnClickListener() {
+        listaEscolhas.setOnDragListener(new View.OnDragListener() {
+            boolean drop;
             @Override
-            public void onClick(View v) {
-                for(Adapters adp : adapters) {
-                    adp.adapter.limparSelecao(adp.holders);
-                }
-            }
-        });
-    }
+            public boolean onDrag(View v, DragEvent event) {
+                final int action = event.getAction();
+                switch (action){
+                    case DragEvent.ACTION_DRAG_STARTED: {
+                        break;
+                    }
+                    case DragEvent.ACTION_DRAG_EXITED: {
+                        listaEscolhas.setBackgroundColor(getResources().getColor(R.color.escolhasExited));
+                        listaEscolhas.setFocusable(false);
+                        drop = false;
+                        break;
+                    }
+                    case DragEvent.ACTION_DRAG_ENTERED:{
+                        listaEscolhas.setBackgroundColor(getResources().getColor(R.color.escolhasEntered));
+                        listaEscolhas.setFocusable(true);
+                        drop = true;
+                        break;
+                    }
 
-    @Override
-    public void fazerPedido(String categoria, ArrayList<ItemAdapter.ItemViewHolder> holders) {
-        if(fazerPedido.get(categoria) == null) {
-            fazerPedido.put(categoria, holders);
-        }
-        btnFazerPedido.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ArrayList<String> nomes = new ArrayList<>();
-                ArrayList<String> valores = new ArrayList<>();
-                Collection<ArrayList<ItemAdapter.ItemViewHolder>> collection = fazerPedido.values();
-                for (ArrayList<ItemAdapter.ItemViewHolder> hld : collection) {
-                    for (ItemAdapter.ItemViewHolder holder : hld) {
-                        nomes.add(holder.nomeItem.getText().toString());
-                        valores.add(holder.valorItem.getText().toString());
+                    case DragEvent.ACTION_DRAG_ENDED: {
+                        if(drop) {
+                            if(escolhas.get(nome) == null) {
+                                nomes.add(nome);
+                                valores.add(valor);
+                                imagens.add(imagem);
+                                escolhas.put(nome, holder);
+                                setValorTotal(escolhas);
+                                //valorTotal.setText(getString(R.string.total_a_pagar_r) + String.format("%.2f", acc));
+                                adapter.notifyDataSetChanged();
+                                listaEscolhas.setBackgroundColor(getResources().getColor(R.color.escolhasExited));
+                                return true;
+                            } else {
+                                Toast.makeText(getApplicationContext(), "Voce já adicionou este item", Toast.LENGTH_SHORT).show();
+                                listaEscolhas.setBackgroundColor(getResources().getColor(R.color.escolhasExited));
+                            }
+                        }
+                    }
+                    default:{
+                        break;
                     }
                 }
-                if(nomes.isEmpty() || valores.isEmpty()){
-                    Toast.makeText(context, "Selecione pelomenos 1 item do menu!", Toast.LENGTH_SHORT).show();
-                } else {
-                    bundle.putStringArrayList("nomeItem", nomes);
-                    bundle.putStringArrayList("valorItem", valores);
-                    bundle.putString("valorTotal", String.valueOf(acc));
-                    detalhesPedido.putExtras(bundle);
-                    startActivity(detalhesPedido);
-                }
+                return true;
             }
         });
+    }
+
+    private void setValorTotal(Map<String, ItemAdapter.ItemViewHolder> arrayList){
+        acc = 0;
+        Collection<ItemAdapter.ItemViewHolder> collection = arrayList.values();
+        for(ItemAdapter.ItemViewHolder holder : collection){
+            acc += holder.qtde * Double.parseDouble(holder.valorItem.getText().toString());
+            Log.i("TAG", String.valueOf(acc));
+        }
+
+        valorTotal.setText("Total a Pagar: R$" + String.format("%.2f",acc));
+    }
+
+    @Override
+    public void setQtde(ItemAdapter.ItemViewHolder holder) {
+        String key = holder.nomeItem.getText().toString();
+        if(escolhas.containsKey(key)){
+            escolhas.remove(key);
+            escolhas.put(key, holder);
+            setValorTotal(escolhas);
+        }
+
     }
 
     static class Adapters {
-        ItemAdapter adapter;
-        ArrayList<ItemAdapter.ItemViewHolder> holders;
+        String item;
+        ItemAdapter.ItemViewHolder holder;
 
-        public Adapters(ItemAdapter adapter, ArrayList<ItemAdapter.ItemViewHolder> holders) {
-            this.adapter = adapter;
-            this.holders = holders;
+        public Adapters(String item, ItemAdapter.ItemViewHolder holder) {
+            this.item = item;
+            this.holder = holder;
         }
     }
 }

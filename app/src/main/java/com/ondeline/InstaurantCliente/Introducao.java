@@ -10,10 +10,14 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 public class Introducao extends AppCompatActivity {
 
     VerticalViewPager viewPager;
     SlideAdapter slideAdapter;
+    FirebaseUser firebaseUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +28,8 @@ public class Introducao extends AppCompatActivity {
         viewPager.setAdapter(slideAdapter);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
+        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+
         TextView text = findViewById(R.id.text);
         text.setText("Estou pronto!");
         text.setOnClickListener(new View.OnClickListener() {
@@ -33,5 +39,11 @@ public class Introducao extends AppCompatActivity {
                  startActivity(intent);
             }
         });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        UpdateUI.updateUI(firebaseUser, this);
     }
 }

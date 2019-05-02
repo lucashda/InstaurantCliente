@@ -5,19 +5,17 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import java.io.FileDescriptor;
-import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Map;
+
 
 public class CardapioFragment extends Fragment {
 
@@ -58,17 +56,17 @@ public class CardapioFragment extends Fragment {
             this.valores = getArguments().getStringArrayList("valores");
             this.descricoes = getArguments().getStringArrayList("descricoes");
         }
-        adapter = new ItemAdapter(nomes, imagens, valores, context);
-        adapter.setCategoria(getTag());
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.cardapio_fragment, container, false);
         recyclerView = view.findViewById(R.id.recyclerViewCardapio);
+        adapter = new ItemAdapter(recyclerView.getId(), nomes, imagens, valores, context);
+        adapter.setCategoria(getTag());
         recyclerView.setAdapter(adapter);
-        recyclerView.setLayoutManager(new GridLayoutManager(context, 4));
+        recyclerView.setLayoutManager(new LinearLayoutManager(context));
 
         return view;
     }

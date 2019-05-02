@@ -4,10 +4,14 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -22,9 +26,11 @@ import java.util.Map;
 
 public class DetalhesPedido extends AppCompatActivity {
 
-    TextView txtEscolhas, valorTotal;
     FirebaseFirestore db;
+    double acc = 0;
     Calendar calendar;
+    RecyclerView meuPedidoList;
+    ItemAdapter itemAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,10 +39,10 @@ public class DetalhesPedido extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        meuPedidoList = findViewById(R.id.meuPedidoList);
         Intent intent = getIntent();
-        final Bundle bundle = intent.getExtras();
-        txtEscolhas = findViewById(R.id.txtEscolhas);
-        valorTotal = findViewById(R.id.txtValorPedido);
+        Bundle bundle = intent.getExtras();
+
         escolhas(bundle);
         calendar = Calendar.getInstance();
 
@@ -44,7 +50,7 @@ public class DetalhesPedido extends AppCompatActivity {
 
         Button btnConfimrarPedido = findViewById(R.id.btnConfirmarPedido);
 
-        btnConfimrarPedido.setOnClickListener(new View.OnClickListener() {
+        /*btnConfimrarPedido.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
@@ -71,17 +77,16 @@ public class DetalhesPedido extends AppCompatActivity {
                 Intent intent = new Intent(DetalhesPedido.this, PedidoConfirmado.class);
                 startActivity(intent);
             }
-        });
+        });*/
     }
+    private void escolhas(Bundle bundle){
+        ArrayList<String> nomes = bundle.getStringArrayList("nomes");
+        ArrayList<String> quantidades = bundle.getStringArrayList("quantidades");
+        ArrayList<String> valores = bundle.getStringArrayList("valores");
+        acc = bundle.getDouble("valorTotal");
 
-    public void escolhas(Bundle bundle) {
-        String txt = "";
-        ArrayList<String> escolhas = bundle.getStringArrayList("nomeItem"),
-                valores = bundle.getStringArrayList("valorItem");
-        for (String field : escolhas) {
-            txt += "    - " + field + "     (" + valores.get(escolhas.indexOf(field)) + ")\n";
-        }
-        txtEscolhas.setText(txt);
-        valorTotal.setText("R$" + String.format("%.2f", bundle.getString("valorTotal")));
+        itemAdapter = new ItemAdapter(this, meuPedidoList.getId(), nomes, valores, quantidades);
+        meuPedidoList.setAdapter(itemAdapter);
+        meuPedidoList.setLayoutManager(new LinearLayoutManager(this));
     }
 }
