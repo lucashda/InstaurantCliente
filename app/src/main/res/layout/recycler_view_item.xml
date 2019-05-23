@@ -5,15 +5,17 @@
     android:id="@+id/background"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="2dp">
+    android:background="@drawable/gradient_item_cardapio"
+    android:orientation="vertical">
 
   <android.support.v7.widget.CardView
       android:id="@+id/foreground"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:background="@android:color/background_light"
-      android:padding="4dp"
+      android:background="#00FFFFFF"
+      app:cardBackgroundColor="#00FFFFFF"
+      app:cardCornerRadius="0dp"
+      app:contentPadding="8dp"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toTopOf="parent">
@@ -27,14 +29,13 @@
         android:scaleType="fitXY"
         android:scaleX="1"
         android:scaleY="1"
+        android:visibility="gone"
         tools:srcCompat="@tools:sample/avatars" />
 
     <TextView
         android:id="@+id/txtNome"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="108dp"
-        android:layout_marginTop="24dp"
         android:text="TextView"
         android:textColor="@color/common_google_signin_btn_text_dark_focused"
         android:textSize="18sp" />
@@ -46,7 +47,8 @@
         android:layout_gravity="bottom"
         android:layout_marginStart="108dp"
         android:layout_marginBottom="24dp"
-        android:text="TextView" />
+        android:text="TextView"
+        android:visibility="gone" />
   </android.support.v7.widget.CardView>
 
 </android.support.constraint.ConstraintLayout>

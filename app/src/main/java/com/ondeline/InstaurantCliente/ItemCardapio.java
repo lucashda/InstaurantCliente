@@ -9,12 +9,17 @@ public class ItemCardapio {
     private String valorItem;
     private String urlImagem;
 
-    public ItemCardapio(String nome, String categoriaItem,String descricao, String valor, String urlImagem) {
+    public ItemCardapio(String nome, String categoriaItem, String descricao, String valor, String urlImagem) {
         this.nomeItem = nome;
         this.descricaoItem = descricao;
         this.valorItem = valor;
         this.urlImagem = urlImagem;
         this.categoriaItem = categoriaItem;
+    }
+
+    public ItemCardapio(String nome, String valor){
+        this.nomeItem = nome;
+        this.valorItem = valor;
     }
 
     public String getNomeItem() {

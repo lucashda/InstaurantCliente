@@ -7,6 +7,8 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -32,15 +34,15 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
     ArrayList<String> nomes;
     ArrayList<String> imagens;
     ArrayList<String> valores;
-    ArrayList<String> quantidades;
+    ArrayList<ItemViewHolder> holders = new ArrayList<>();
     private int recyclerViewId;
 
-    private ArrayList<ItemViewHolder> holders = new ArrayList<>();
-    private String categoria;
     private ArrayList<File> paths = new ArrayList<>();
     private Context context;
     private File localFile;
     RecyclerViewListener recyclerViewListener;
+
+    View.OnClickListener add, sub;
 
     FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
     StorageReference reference = firebaseStorage.getReference();
@@ -54,60 +56,61 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         recyclerViewListener = (RecyclerViewListener) context;
     }
 
-    public ItemAdapter(Context context, int recyclerViewId, ArrayList<String> nomes, ArrayList<String> valores, ArrayList<String> quantidades) {
+    public ItemAdapter(Context context, int recyclerViewId, ArrayList<String> nomes, ArrayList<String> imagens, ArrayList<String> valores) {
         this.recyclerViewId = recyclerViewId;
         this.nomes = nomes;
         this.valores = valores;
-        this.quantidades = quantidades;
+        this.imagens = imagens;
         this.context = context;
-    }
-
-    public void setCategoria(String categoria){
-        this.categoria = categoria;
+        recyclerViewListener = (RecyclerViewListener) context;
     }
 
     @Override
     public void onBindViewHolder(@NonNull final ItemViewHolder holder, final int position) {
-
+        if(!holders.contains(holder)) {
+            holders.add(holder);
+        } else {
+            holders.remove(holder);
+            holders.add(holder);
+        }
         holder.nomeItem.setText(nomes.get(position));
         holder.valorItem.setText(valores.get(position));
-        holder.foreground.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                if(holder.getItemViewType() == 0) {
-                    ClipData clipData = ClipData.newPlainText("", "");
-                    View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(v);
-                    v.startDrag(clipData, shadowBuilder, null, View.TEXT_ALIGNMENT_CENTER);
-                    recyclerViewListener.dropItens(holder, nomes.get(position), valores.get(position), paths.get(position).getAbsolutePath());
-                } else if (holder.getItemViewType() == 2){
-
-                }
-                return true;
-            }
-        });
-        if(holder.getItemViewType() == 0) {
+        if(holder.getItemViewType() == 0){
             getImageStorage(imagens.get(position), holder, position);
-        } else if (holder.getItemViewType() == 1){
-            holder.imagemItem.setImageBitmap(BitmapFactory.decodeFile(imagens.get(position)));
+            holder.foreground.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    recyclerViewListener.setEscolhas(nomes.get(position), valores.get(position), paths.get(position).getAbsolutePath(),holder);
+                }
+            });
         } else {
-            holder.txtQtde.setText(quantidades.get(position));
-        }
+            holder.imagemItem.setImageBitmap(BitmapFactory.decodeFile(imagens.get(position)));
+            holder.foreground.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if(holder.isDivided) {
+                        Toast.makeText(context, "Você já dividiu este item", Toast.LENGTH_SHORT).show();
+                        return false;
+                    } else {
+                        recyclerViewListener.dividirItem(nomes.get(position), valores.get(position), holder.qtde, holder);
+                        return true;
+                    }
+                }
+            });
 
-        if(holder.getItemViewType() == 1){
-            holders.add(holder);
-            holder.txtQtde.setText(String.valueOf(holder.qtde));
-            holder.addQtde.setOnClickListener(new View.OnClickListener() {
+            add = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     holder.qtde += 1;
                     holder.txtQtde.setText(String.valueOf(holder.qtde));
                     recyclerViewListener.setQtde(holder);
                 }
-            });
-            holder.subQtde.setOnClickListener(new View.OnClickListener() {
+            };
+
+            sub = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if(holder.qtde > 1) {
+                    if (holder.qtde > 1) {
                         holder.qtde -= 1;
                         holder.txtQtde.setText(String.valueOf(holder.qtde));
                         recyclerViewListener.setQtde(holder);
@@ -115,20 +118,37 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
                         Toast.makeText(context, "Escolha deve conter pelomenos 1 item!", Toast.LENGTH_SHORT).show();
                     }
                 }
-            });
+            };
+
+            if(!holder.isDivided) {
+                holder.qtde = 1;
+                holder.txtQtde.setText(String.valueOf(holder.qtde));
+                holder.addQtde.setOnClickListener(add);
+                holder.subQtde.setOnClickListener(sub);
+                holder.foreground.setForeground(null);
+            } else {
+                holder.foreground.setForeground(context.getResources().getDrawable(R.drawable.foreground_is_divided));
+                holder.addQtde.setOnClickListener(null);
+                holder.subQtde.setOnClickListener(null);
+            }
         }
     }
 
+    public void setDivided(ItemViewHolder holder, boolean isDivided){
+        holder.isDivided = isDivided;
+        holder.foreground.setForeground(context.getResources().getDrawable(R.drawable.foreground_is_divided));
+        holder.addQtde.setOnClickListener(null);
+        holder.subQtde.setOnClickListener(null);
+    }
+
     public void removeItem(int position){
-        holders.remove(position);
         nomes.remove(position);
         valores.remove(position);
         imagens.remove(position);
         notifyItemRemoved(position);
     }
 
-    public void restoreItem(ItemViewHolder holder, String nome, String imagem, String valor, int position){
-        holders.add(holder);
+    public void restoreItem(String nome, String imagem, String valor, int position){
         nomes.add(position, nome);
         valores.add(position, valor);
         imagens.add(position, imagem);
@@ -138,18 +158,14 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
 
     @NonNull
     @Override
-    public ItemViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+    public ItemViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
         if(viewType == 0) {
             View view = LayoutInflater.from(viewGroup.getContext())
                     .inflate(R.layout.recycler_view_item, viewGroup, false);
             return new ItemViewHolder(view);
-        } else if(viewType == 1){
-            View view = LayoutInflater.from(viewGroup.getContext())
-                    .inflate(R.layout.recycler_view_item_2, viewGroup, false);
-            return new ItemViewHolder(view);
         } else {
             View view = LayoutInflater.from(viewGroup.getContext())
-                    .inflate(R.layout.recycler_view_item_3, viewGroup, false);
+                    .inflate(R.layout.recycler_view_item_2, viewGroup, false);
             return new ItemViewHolder(view);
         }
     }
@@ -157,6 +173,15 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
     @Override
     public int getItemCount() {
         return nomes.size();
+    }
+
+    public void undoDivided(ItemCardapio itemCardapio) {
+        for(ItemViewHolder holder : holders){
+            if(itemCardapio.getNomeItem().equals(holder.nomeItem.getText().toString())){
+                holder.isDivided = true;
+                notifyItemChanged(holder.getAdapterPosition());
+            }
+        }
     }
 
     static class ItemViewHolder extends RecyclerView.ViewHolder {
@@ -168,7 +193,8 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         ImageButton addQtde;
         ImageButton subQtde;
         TextView txtQtde;
-        int qtde = 1;
+        boolean isDivided;
+        int qtde;
 
         public ItemViewHolder(View itemView) {
             super(itemView);
@@ -212,15 +238,14 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
     public int getItemViewType(int position) {
         if(recyclerViewId == R.id.recyclerViewCardapio){
             return 0;
-        }else if(recyclerViewId == R.id.listaEscolhas){
+        }else {
             return 1;
-        } else {
-            return 2;
         }
     }
 
     public interface RecyclerViewListener {
-        void dropItens(ItemViewHolder holder, String nome, String valor, String imagem);
+        void dividirItem(String nome, String valor, int qtde, ItemViewHolder holder);
+        void setEscolhas(String nome, String valor, String imagem, ItemViewHolder holder);
         void setQtde(ItemViewHolder holder);
     }
 }
